@@ -11,9 +11,6 @@ section .text
     global _start         ; referencia para inicio de programa
 
 _start:
-    ; cadena original
-    mov edx, msg
-    call puts
 
     ; A)DIRECTO/INMEDIATO
     mov edx, A
@@ -92,9 +89,9 @@ _start:
     mov edx, msg
     call puts
 
-    mov ebx, msg                     
+    mov ebx, msg + 3                   
     mov esi, 4                     
-    mov byte [ebx + esi*4 + 3], '%'   
+    mov byte [ebx + esi*4], '%'   
 
     mov edx, D
     call puts
