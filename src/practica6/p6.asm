@@ -16,14 +16,14 @@ section .text
     
 _start:  
 
-    mov edx, cadena
-    mov cx, 0
-    mov ax, lencadena
-    mov ah, ln
-
     ; --- IMPRIMIR CADENA  ---
-    mov ebx, msg1        
-    call puts   
+    mov edx, msg1        
+    call puts
+
+    mov edx, cadena 
+    mov bx, lencadena 
+    mov cx, 0
+
     call captura 
 
 
@@ -38,38 +38,45 @@ _start:
     ; --- FIN DE PROGRAMA ---
     .fin_programa: 
         mov edx, nline    
-        call puts     
-        call puts     
+        call puts         
         mov eax, 1            ; Llamada sys_exit
 	    xor ebx, ebx          ; return 0
         int 0x80              ; Fin de programa
 
    
     captura:  push ax
-              call getche
+              push bx
+              
+    .loop:    call getch
               cmp al, bskey
               jne .sig
-              call borrar
+              jmp .borrar
     
-    .sig:   cmp al, ah
-            jz mostrar
+    .sig:   cmp al, ln
+            jz .salir
+            call putchar
             mov byte[edx], al
             inc edx
             inc cx
-            cmp cx, ax
-            jz mostrar
-            jmp captura
+            cmp cx, bx
+            jz .salir
+            jmp .loop
 
+    .borrar:  cmp cx, 0
+          je .loop              
+          dec edx
+          dec cx
+          mov al, 0x8
+          call putchar
+          mov al, ' '
+          call putchar
+          mov al, 0x8
+          call putchar
+          jmp .loop
+
+    .salir: mov byte[edx], 0
+            pop bx
             pop ax
             ret
 
-    borrar:
-        push ax 
-        mov al,0x8
-        call putchar    
-        mov al,' '
-        call putchar
-        mov al,0x8
-        call putchar   
-        pop ax
-        ret 
+   
