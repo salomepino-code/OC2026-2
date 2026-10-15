@@ -87,7 +87,7 @@ _start:
           call putchar
           jmp .loop
 
-    .salir: mov byte[edx], ln
+    .salir: mov byte[edx], 0
             pop ax
             ret
 
