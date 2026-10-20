@@ -38,6 +38,8 @@ _start:
 
     mov edx, salida
     mov ecx, 16
+
+    add eax, 123
     call itoa
     mov esi, edx
 
@@ -110,7 +112,7 @@ itoa:
     lea esi, [edx + ecx - 1]     ; última posición del buffer
     mov byte [esi], 0            
 
-    xor ebx, ebx                 
+    mov ebx, 0                
     test eax, eax
     jns .conv
     neg eax
