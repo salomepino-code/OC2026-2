@@ -1,86 +1,179 @@
-
+extern canonical_off
+extern canonical_on
 
 section .data
     bskey equ 0x7F
-    lencadena equ 64
-    lensalida equ 12
+    lencadena equ 255
     ln equ 0x0A
     nline db ln,0
     msg1 db ln,'Captura: ', 0
     msg2 db ln,'Cadena: ', 0
-    msg3 db ln,'Numero: ', 0
-    
+
 section .bss
     cadena resb lencadena
-    salida resb lensalida
 
 section .text
-    global _start         
-    
-_start:  
+    global _start
 
-mov edx, msg1        
-call captura
+_start:
+    mov edx, msg1
+    call puts
 
-; CAPTURAR
-captura:  push bx
-              
-    .loop:    call getch
-              cmp al, bskey
-              jne .sig
-              jmp .borrar
-    
-    .sig:   cmp al, ln
-            jz .salir
-            call putchar
-            mov byte[edx], al
-            inc edx
-            inc cx
-            cmp cx, bx
-            jz .salir
-            jmp .loop
+    mov edx, cadena
+    mov ax, lencadena
+    mov cx, 0
+    call captura
+    call mostrar
 
-    .borrar:  cmp cx, 0
-          je .loop              
-          dec edx
-          dec cx
-          mov al, 0x8
-          call putchar
-          mov al, ' '
-          call putchar
-          mov al, 0x8
-          call putchar
-          jmp .loop
+    mov edx, cadena          
+    call mayusculas          
+    call mostrar
 
-    .salir: mov byte[edx], 0
-            pop bx
-            ret
+    call minusculas
+    call mostrar
 
+    mov edx, nline
+    call puts
+    mov eax, 1
+    xor ebx, ebx
+    int 0x80
 
-; GETCH
-getche: push ebx
+; --- MOSTRAR ---
+mostrar:
+    push edx
+    mov edx, msg2
+    call puts
+    mov edx, cadena
+    call puts
+    pop edx
+    ret
 
-        mov eax, 3
-        mov ebx, 0
-        mov ecx, msg1+1
-        mov edx, 1
-        int 0x80
+; --- CAPTURA ---
+captura:
+    push esi
+    movzx esi, ax            
+.loop:
+    call getch
+    cmp al, bskey
+    je .borrar
+    cmp al, ln
+    je .salir
+    call putchar
+    mov byte [edx], al
+    inc edx
+    inc cx
+    cmp cx, si
+    je .salir
+    jmp .loop
+.borrar:
+    cmp cx, 0
+    je .loop
+    dec edx
+    dec cx
+    mov al, 0x8
+    call putchar
+    mov al, ' '
+    call putchar
+    mov al, 0x8
+    call putchar
+    jmp .loop
+.salir:
+    mov byte [edx], 0
+    pop esi
+    ret
 
-        pop ebx
-        ret
+; --- MAYUSCULAS ---
+mayusculas:
+    push edx
+.loop:
+    cmp byte [edx], 0
+    je .salir
+    cmp byte [edx], 'a'
+    jb .avanzar
+    cmp byte [edx], 'z'
+    ja .avanzar
+    sub byte [edx], 32
+.avanzar:
+    inc edx
+    jmp .loop
+.salir:
+    pop edx
+    ret
 
-; GETCH  
-getch: 
+; --- MINUSCULAS ---
+minusculas:
+    push edx
+.loop:
+    cmp byte [edx], 0
+    je .salir
+    cmp byte [edx], 'A'
+    jb .avanzar
+    cmp byte [edx], 'Z'
+    ja .avanzar
+    add byte [edx], 32
+.avanzar:
+    inc edx
+    jmp .loop
+.salir:
+    pop edx
+    ret
 
-ret
-
-;PUTCHAR 
+; ===== PUTCHAR  =====
 putchar:
+    push eax
+    push ebx
+    push ecx
+    push edx
+    lea ecx, [esp+12]        
+    mov eax, 4               
+    mov ebx, 1               
+    mov edx, 1
+    int 0x80
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+    ret
 
-ret
-
-;PUTS 
+; ===== PUTS =====
 puts:
+    push eax
+    push edx
+.loop:
+    mov al, [edx]
+    cmp al, 0
+    je .fin
+    call putchar
+    inc edx
+    jmp .loop
+.fin:
+    pop edx
+    pop eax
+    ret
 
-ret
-    
+; ===== GETCH =====
+getch:
+    push ebx
+    push ecx
+    push edx
+    call canonical_off
+    push eax
+    mov eax, 3               
+    mov ebx, 0               
+    mov ecx, esp
+    mov edx, 1
+    int 0x80
+    pop eax                  
+    push eax
+    call canonical_on
+    pop eax
+    pop edx
+    pop ecx
+    pop ebx
+    ret
+
+; ===== GETCHE =====
+getche:
+    call getch
+    call putchar
+    ret
